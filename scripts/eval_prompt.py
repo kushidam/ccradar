@@ -2,22 +2,13 @@
 """プロンプト評価スクリプト。
 
 正解データ（scripts/ground_truth.csv）を基に Gemini 分類プロンプトの精度を評価する。
-正解データが未作成の場合は --build-truth で自動生成 → Claude がレビュー → ユーザー承認のフローで作成する。
+正解データが未作成の場合は build_truth.py で先に作成すること。
 
 Usage:
-    # 正解データの自動生成（特定バージョン指定）
-    uv run python scripts/eval_prompt.py --build-truth --versions 2.1.45,2.1.49,2.1.47,2.1.44
-
-    # 正解データの自動生成（直近 N 件からフォールバック）
-    uv run python scripts/eval_prompt.py --build-truth --count N
-
-    # 正解データに含まれるバージョンで評価
     uv run python scripts/eval_prompt.py
 """
 
-import argparse
 import csv
-import logging
 import re
 import sys
 import unicodedata
@@ -33,116 +24,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.classifier import classify_release
-from src.github_client import fetch_releases, get_release_body, get_release_by_tag, get_release_version
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger(__name__)
 
 GROUND_TRUTH_PATH = PROJECT_ROOT / "scripts" / "ground_truth.csv"
 EVAL_RESULT_PATH = PROJECT_ROOT / "scripts" / "eval_result.csv"
 
-# 先頭動詞 → 正解カテゴリのマッピング
-VERB_TO_CATEGORY = {
-    "added": "Feature",
-    "fixed": "Bugfix",
-    "improved": "Improvement",
-    "changed": "Change",
-    "removed": "Change",
-    "deprecated": "Change",
-    "breaking": "Breaking",
-}
-
 # 通知対象カテゴリ（Bugfix 以外）
 NOTIFY_CATEGORIES = {"Feature", "Improvement", "Change", "Breaking"}
-
-
-def extract_items_from_body(body: str) -> list[dict]:
-    """リリースボディから箇条書き項目を抽出し、先頭動詞で仮分類する。
-
-    Returns:
-        [{"text": "原文", "category": "Feature"|...|"Unknown"}, ...]
-    """
-    items = []
-    for line in body.split("\n"):
-        m = re.match(r"^- (.+)", line)
-        if not m:
-            continue
-        text = m.group(1).strip()
-
-        # プラットフォームプレフィックス（[VSCode] 等）を除去して動詞を取得
-        clean = re.sub(r"^\[.*?\]\s*", "", text)
-        first_word = clean.split()[0].lower().rstrip(":") if clean else ""
-        category = VERB_TO_CATEGORY.get(first_word, "Unknown")
-
-        items.append({"text": text, "category": category})
-
-    return items
-
-
-def fetch_releases_by_versions(version_list: list[str]) -> list[dict]:
-    """指定バージョンのリリースを個別に取得する。"""
-    releases = []
-    for ver in version_list:
-        release = get_release_by_tag(ver)
-        if release:
-            releases.append(release)
-        else:
-            logger.warning("Release not found: %s", ver)
-    return releases
-
-
-def build_truth(count: int, version_list: list[str] | None = None) -> None:
-    """先頭動詞ベースで正解データの草案を生成し CSV に保存する。
-
-    Unknown 項目は Claude がレビュー・補完する前提。
-    """
-    print("=" * 70)
-
-    if version_list:
-        print(f"Building ground truth draft for versions: {', '.join(version_list)} ...")
-        releases = fetch_releases_by_versions(version_list)
-    else:
-        print(f"Building ground truth draft from latest {count} releases ...")
-        releases = fetch_releases(per_page=count)
-
-    print(f"Fetched {len(releases)} releases")
-
-    rows = []
-    unknown_count = 0
-
-    for release in releases:
-        version = get_release_version(release)
-        body = get_release_body(release)
-        if not body or not body.strip():
-            continue
-
-        items = extract_items_from_body(body)
-        for item in items:
-            rows.append({"version": version, "category": item["category"], "text": item["text"]})
-            if item["category"] == "Unknown":
-                unknown_count += 1
-
-    with open(GROUND_TRUTH_PATH, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["version", "category", "text"])
-        writer.writeheader()
-        writer.writerows(rows)
-
-    total_count = len(rows)
-    print(f"\n正解データ草案を保存: {GROUND_TRUTH_PATH}")
-    print(f"  総項目数: {total_count}")
-    print(f"  自動分類: {total_count - unknown_count}件")
-    print(f"  Unknown（要レビュー）: {unknown_count}件")
-    print(f"\n次のステップ: 人またはAI が Unknown 項目をレビューしてカテゴリを補完します。")
 
 
 def load_ground_truth() -> dict[str, list[dict]]:
     """保存済みの正解データ（CSV）を読み込み、バージョンごとにグループ化して返す。"""
     if not GROUND_TRUTH_PATH.exists():
         print(f"正解データが見つかりません: {GROUND_TRUTH_PATH}")
-        print("先に --build-truth で正解データを作成してください。")
+        print("先に build_truth.py で正解データを作成してください。")
         sys.exit(1)
 
     versions: dict[str, list[dict]] = {}
@@ -403,31 +297,7 @@ def evaluate() -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="プロンプト評価スクリプト")
-    parser.add_argument(
-        "--count",
-        type=int,
-        default=20,
-        help="--build-truth 時のフォールバック: 直近 N 件から生成（デフォルト: 20）",
-    )
-    parser.add_argument(
-        "--versions",
-        type=str,
-        default=None,
-        help="--build-truth 時: カンマ区切りのバージョン指定（例: 2.1.45,2.1.49,2.1.47,2.1.44）",
-    )
-    parser.add_argument(
-        "--build-truth",
-        action="store_true",
-        help="正解データの草案を自動生成する（先頭動詞ベース、要レビュー）",
-    )
-    args = parser.parse_args()
-
-    if args.build_truth:
-        version_list = [v.strip() for v in args.versions.split(",")] if args.versions else None
-        build_truth(args.count, version_list)
-    else:
-        evaluate()
+    evaluate()
 
 
 if __name__ == "__main__":

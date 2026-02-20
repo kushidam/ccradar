@@ -22,7 +22,8 @@ src/
   notifier.py       # Slack 通知
   state.py          # 処理済みバージョン管理（data/state.json）
 scripts/
-  eval_prompt.py    # プロンプト評価スクリプト（正解データ生成・精度評価）
+  build_truth.py    # 正解データ草案の生成
+  eval_prompt.py    # 分類精度の評価
   ground_truth.csv # 評価用の正解データ
 data/
   state.json        # 状態ファイル（Git 管理、Actions が自動コミット）
@@ -53,10 +54,10 @@ uv run python -m src.main
 uv run python scripts/eval_prompt.py
 
 # 正解データの草案生成（特定バージョン指定）
-uv run python scripts/eval_prompt.py --build-truth --versions 2.1.45,2.1.49,2.1.47,2.1.44
+uv run python scripts/build_truth.py --versions 2.1.45,2.1.49,2.1.47,2.1.44
 
 # 正解データの草案生成（直近 N 件から）
-uv run python scripts/eval_prompt.py --build-truth --count 20
+uv run python scripts/build_truth.py --count 20
 ```
 
 **注意**: `python src/main.py` ではなく `python -m src.main` で実行すること（インポート解決のため）。
