@@ -18,20 +18,20 @@
 | 7 | Bugfix-only リリース | Fixed のみのリリース → 空を返すべき | 重要 |
 | 8 | 大量項目リリース | 68 件等 → 見落としが起きやすい | あると良い |
 
-## 現在の選定（2025-02 時点）
+## 現在の選定（2026-02 時点）
 
 | リリース | 項目数 | カバーするパターン |
 |----------|--------|-------------------|
 | v2.1.45 | 15 件 | #1 基本形（Added/Fixed/Improved） + #2 `[VSCode]` 接頭辞 |
-| v2.1.49 | 20 件 | #4 動詞なし Feature + #5 動詞なし Change |
-| v2.1.47 | 68 件 | #3 `Windows:`/`VSCode:` 接頭辞、#6 未知動詞、#8 大量項目 |
+| v2.1.49 | 20 件 | #1 標準動詞 + #4 動詞なし Feature + #5 動詞なし Change |
+| v2.1.47 | 68 件 | #1 標準動詞、#3 `Windows:`/`VSCode:` 接頭辞、#4 動詞なし Feature、#5 動詞なし Change、#6 未知動詞、#8 大量項目 |
 | v2.1.44 | 1 件 | #7 Bugfix-only リリース（空結果を期待） |
 
 ### 選定理由
 
 - **v2.1.45**: 最も標準的な構成。Added 4 件、Fixed 7 件、Improved 3 件、`[VSCode]` 1 件とバランスが良い
-- **v2.1.49**: `Simple mode now includes...`、`Sonnet 4.5 is being removed...` 等の動詞なしパターンが複数含まれる
-- **v2.1.47**: 68 件の大型リリース。`Windows: Fixed...` 等の括弧なしプラットフォーム接頭辞や `Moved...`、`Simplified...` 等の未知動詞パターンが含まれる
+- **v2.1.49**: `Simple mode now includes...`（動詞なし Feature）、`Sonnet 4.5 is being removed...`（動詞なし Change）等の動詞なしパターンの代表例を含む。v2.1.47 と重複するが、クリーンな動詞なし例として評価精度向上に貢献
+- **v2.1.47**: 68 件の大型リリース。`Windows: Fixed...`/`VSCode: Fixed...` 等の括弧なしプラットフォーム接頭辞、`Moved...`/`Simplified...`/`Increased...` 等の未知動詞、`Use ctrl+f to...`（Change）等の多様なパターンを含む
 - **v2.1.44**: `Fixed auth refresh errors` の 1 件のみ。Bugfix-only リリースで空結果を返すべきケース
 
 ## 更新タイミング

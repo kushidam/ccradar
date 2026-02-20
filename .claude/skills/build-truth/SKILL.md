@@ -19,6 +19,9 @@ allowed-tools:
 パターンのバリエーション基準で選定・構築する。
 $ARGUMENTS に候補取得件数が指定されていれば使用し、未指定時は 15 件。
 
+**重要: データソースは GitHub Releases API に統一すること。**
+正解データの項目数・内容は `gh api` で取得したリリースノートに基づくこと。
+
 ## 選定基準
 
 `docs/ground-truth-selection.md` に記載のパターンを網羅すること:

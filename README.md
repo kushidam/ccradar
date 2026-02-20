@@ -1,6 +1,6 @@
 # Claude Code Release Radar
 
-Claude Code のリリース情報を自動取得し、**新機能・機能拡張のみ**を抽出して Slack に通知する Python システムです。
+Claude Code のリリース情報を自動取得し、**新機能・機能拡張・破壊的変更・動作変更**を抽出して Slack に通知する Python システムです。
 
 ## 概要
 
@@ -8,10 +8,24 @@ Claude Code は高頻度でアップデートされるため、手動でのキ�
 
 1. GitHub API から Claude Code の最新リリース情報を取得
 2. Gemini API (LLM) でリリースノートを分類・要約
-3. 新機能 (Feature) と機能拡張 (Improvement) のみを抽出
+3. Feature / Improvement / Breaking / Change を抽出（Bugfix はスキップ）
 4. Slack Incoming Webhook で通知
 
-Bugfix、内部変更、リファクタリングのみのリリースは通知対象外です。
+## 分類カテゴリと通知ルール
+
+Gemini API がリリースノートの各項目を以下のカテゴリに分類します:
+
+| カテゴリ | 説明 | 通知 |
+|----------|------|------|
+| Feature | 新機能・新コマンド・新設定の追加 | :white_check_mark: |
+| Improvement | 既存機能の拡張・パフォーマンス改善・UX改善 | :white_check_mark: |
+| Breaking | 破壊的変更・後方互換性のない変更 | :white_check_mark: |
+| Change | 動作変更・非推奨化・削除・デフォルト値変更 | :white_check_mark: |
+| Bugfix | バグ修正・クラッシュ修正 | :x: スキップ |
+
+- Bugfix は分類対象外（Gemini のプロンプトで除外指示）
+- ただしセキュリティ修正は Change として抽出
+- Bugfix のみのリリースは簡易テキスト通知（「Bugfix のみ」）
 
 ## アーキテクチャ
 
@@ -22,10 +36,10 @@ GitHub API (claude-code releases)
   github_client.py    ... リリース情報の取得・差分検知
         |
         v
-   classifier.py      ... Gemini API による分類・要約
+   classifier.py      ... Gemini API による分類（Feature/Improvement/Breaking/Change）・要約
         |
         v
-    notifier.py        ... Slack Incoming Webhook で通知
+    notifier.py        ... Slack Incoming Webhook で通知（Feature/Improvement/Breaking/Change）
         |
         v
      state.py          ... 処理済みバージョンの永続化
@@ -94,7 +108,7 @@ uv run python -m src.main
 |---|---|---|
 | `GEMINI_API_KEY` | Yes | Google Gemini API のキー |
 | `SLACK_WEBHOOK_URL` | Yes | Slack Incoming Webhook の URL（`--dry-run` 時は不要） |
-| `GEMINI_MODEL` | No | 使用する Gemini モデル（デフォルト: `gemini-3.0-flash`） |
+| `GEMINI_MODEL` | No | 使用する Gemini モデル（デフォルト: `gemini-3-0-flash`） |
 | `GITHUB_TOKEN` | No | GitHub API トークン（レート制限緩和用、未設定でも動作可） |
 
 ## ディレクトリ構成
@@ -106,6 +120,10 @@ ccradar/
 │       └── release-radar.yml   # GitHub Actions ワークフロー
 ├── data/
 │   └── state.json              # 処理済みバージョンの状態ファイル
+├── docs/                       # 要件定義書・設計ドキュメント
+├── scripts/
+│   ├── eval_prompt.py          # プロンプト評価スクリプト
+│   └── ground_truth.json       # 評価用の正解データ
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                 # エントリポイント
@@ -113,9 +131,23 @@ ccradar/
 │   ├── classifier.py           # Gemini による分類・要約
 │   ├── notifier.py             # Slack 通知
 │   └── state.py                # 状態管理
-├── .env.example                   # 環境変数テンプレート
-├── README.md
+├── .env.example                # 環境変数テンプレート
+├── CLAUDE.md                   # Claude Code 用プロジェクト設定
 ├── pyproject.toml
 └── uv.lock
 ```
+
+## Claude Code Skills
+
+本プロジェクトでは [Claude Code](https://docs.anthropic.com/en/docs/claude-code) のカスタムスキルを使って分類プロンプトの品質管理を行っています。
+
+| スキル | 説明 |
+|--------|------|
+| `/build-truth` | 正解データの選定・構築。GitHub Releases からパターンのバリエーションを網羅するリリースを選定し、`scripts/ground_truth.json` を生成する |
+| `/tune-prompt` | 分類プロンプトの自動評価・最適化。正解データに対して `src/classifier.py` の `SYSTEM_PROMPT` を反復的に改善する |
+
+### ワークフロー
+
+1. `/build-truth` で評価用の正解データを作成（パターン網羅性を基準に 3〜5 リリースを選定）
+2. `/tune-prompt` で現在のプロンプトの精度を評価し、自動で改善を反復（最大 3 回）
 

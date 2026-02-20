@@ -15,6 +15,7 @@ def _build_blocks(version: str, items: list[ClassifiedItem]) -> list[dict]:
     features = [item for item in items if item.category == "Feature"]
     improvements = [item for item in items if item.category == "Improvement"]
     breakings = [item for item in items if item.category == "Breaking"]
+    changes = [item for item in items if item.category == "Change"]
 
     blocks = [
         {
@@ -56,6 +57,16 @@ def _build_blocks(version: str, items: list[ClassifiedItem]) -> list[dict]:
             },
         })
 
+    if changes:
+        change_text = "\n".join(f"  - {c.summary}" for c in changes)
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"*:arrows_counterclockwise: Changes*\n{change_text}",
+            },
+        })
+
     blocks.append({
         "type": "context",
         "elements": [
@@ -74,7 +85,7 @@ def notify(version: str, items: list[ClassifiedItem]) -> None:
 
     Args:
         version: リリースバージョン文字列。
-        items: 分類済み項目のリスト（Feature, Improvement, Breaking）。
+        items: 分類済み項目のリスト（Feature, Improvement, Breaking, Change）。
 
     Raises:
         RuntimeError: SLACK_WEBHOOK_URL が未設定の場合。
@@ -116,6 +127,7 @@ def format_dry_run(version: str, items: list[ClassifiedItem]) -> str:
     features = [item for item in items if item.category == "Feature"]
     improvements = [item for item in items if item.category == "Improvement"]
     breakings = [item for item in items if item.category == "Breaking"]
+    changes = [item for item in items if item.category == "Change"]
 
     lines = [f"=== Claude Code {version} ==="]
 
@@ -133,5 +145,10 @@ def format_dry_run(version: str, items: list[ClassifiedItem]) -> str:
         lines.append("\n[Improvements]")
         for i in improvements:
             lines.append(f"  - {i.summary}")
+
+    if changes:
+        lines.append("\n[Changes]")
+        for c in changes:
+            lines.append(f"  - {c.summary}")
 
     return "\n".join(lines)
