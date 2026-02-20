@@ -5,6 +5,7 @@ import os
 
 import requests
 
+from src.categories import Category
 from src.classifier import ClassifiedItem
 
 logger = logging.getLogger(__name__)
@@ -12,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 def _build_blocks(version: str, items: list[ClassifiedItem]) -> list[dict]:
     """通知用の Slack Block Kit ブロックを構築する。"""
-    features = [item for item in items if item.category == "Feature"]
-    improvements = [item for item in items if item.category == "Improvement"]
-    breakings = [item for item in items if item.category == "Breaking"]
-    changes = [item for item in items if item.category == "Change"]
+    features = [item for item in items if item.category == Category.FEATURE]
+    improvements = [item for item in items if item.category == Category.IMPROVEMENT]
+    breakings = [item for item in items if item.category == Category.BREAKING]
+    changes = [item for item in items if item.category == Category.CHANGE]
 
     blocks = [
         {
@@ -124,10 +125,10 @@ def format_dry_run(version: str, items: list[ClassifiedItem]) -> str:
     if not items:
         return f"[{version}] Release found, but no new features, improvements, or breaking changes (bugfix only)."
 
-    features = [item for item in items if item.category == "Feature"]
-    improvements = [item for item in items if item.category == "Improvement"]
-    breakings = [item for item in items if item.category == "Breaking"]
-    changes = [item for item in items if item.category == "Change"]
+    features = [item for item in items if item.category == Category.FEATURE]
+    improvements = [item for item in items if item.category == Category.IMPROVEMENT]
+    breakings = [item for item in items if item.category == Category.BREAKING]
+    changes = [item for item in items if item.category == Category.CHANGE]
 
     lines = [f"=== Claude Code {version} ==="]
 

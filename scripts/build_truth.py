@@ -27,6 +27,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from src.categories import Category
 from src.github_client import fetch_releases, get_release_body, get_release_by_tag, get_release_version
 
 logging.basicConfig(
@@ -39,13 +40,13 @@ GROUND_TRUTH_PATH = PROJECT_ROOT / "scripts" / "ground_truth.csv"
 
 # 先頭動詞 → 正解カテゴリのマッピング
 VERB_TO_CATEGORY = {
-    "added": "Feature",
-    "fixed": "Bugfix",
-    "improved": "Improvement",
-    "changed": "Change",
-    "removed": "Change",
-    "deprecated": "Change",
-    "breaking": "Breaking",
+    "added": Category.FEATURE,
+    "fixed": Category.BUGFIX,
+    "improved": Category.IMPROVEMENT,
+    "changed": Category.CHANGE,
+    "removed": Category.CHANGE,
+    "deprecated": Category.CHANGE,
+    "breaking": Category.BREAKING,
 }
 
 

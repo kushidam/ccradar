@@ -13,6 +13,7 @@ import re
 import sys
 import unicodedata
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 # プロジェクトルートをパスに追加
@@ -23,13 +24,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from src.categories import NOTIFY_CATEGORIES, Category
 from src.classifier import classify_release
 
 GROUND_TRUTH_PATH = PROJECT_ROOT / "scripts" / "ground_truth.csv"
-EVAL_RESULT_PATH = PROJECT_ROOT / "scripts" / "eval_result.csv"
-
-# 通知対象カテゴリ（Bugfix 以外）
-NOTIFY_CATEGORIES = {"Feature", "Improvement", "Change", "Breaking"}
+_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+EVAL_RESULT_PATH = PROJECT_ROOT / "scripts" / f"eval_result_{_timestamp}.csv"
 
 
 def load_ground_truth() -> dict[str, list[dict]]:
@@ -149,11 +149,11 @@ def evaluate() -> None:
 
     # カテゴリ別の集計
     agg = {
-        "Feature": {"expected": 0, "actual": 0},
-        "Improvement": {"expected": 0, "actual": 0},
-        "Change": {"expected": 0, "actual": 0},
-        "Breaking": {"expected": 0, "actual": 0},
-        "Bugfix": {"total": 0, "leaked": 0},
+        Category.FEATURE: {"expected": 0, "actual": 0},
+        Category.IMPROVEMENT: {"expected": 0, "actual": 0},
+        Category.CHANGE: {"expected": 0, "actual": 0},
+        Category.BREAKING: {"expected": 0, "actual": 0},
+        Category.BUGFIX: {"total": 0, "leaked": 0},
     }
 
     # 通知可否の集計
@@ -185,14 +185,14 @@ def evaluate() -> None:
             gemini_by_cat[item.category].append(item.summary)
 
         # カテゴリ別集計
-        for cat in ["Feature", "Improvement", "Change", "Breaking"]:
+        for cat in NOTIFY_CATEGORIES:
             expected = len(truth_by_cat.get(cat, []))
             actual = len(gemini_by_cat.get(cat, []))
             agg[cat]["expected"] += expected
             agg[cat]["actual"] += actual
 
-        agg["Bugfix"]["total"] += len(truth_by_cat.get("Bugfix", []))
-        agg["Bugfix"]["leaked"] += len(gemini_by_cat.get("Bugfix", []))
+        agg[Category.BUGFIX]["total"] += len(truth_by_cat.get(Category.BUGFIX, []))
+        agg[Category.BUGFIX]["leaked"] += len(gemini_by_cat.get(Category.BUGFIX, []))
 
         # 項目レベルのマッチング
         matched = match_gemini_to_truth(truth_items, items)
@@ -219,7 +219,7 @@ def evaluate() -> None:
 
         # Issue 検出
         issues = []
-        for cat in ["Feature", "Improvement", "Change", "Breaking"]:
+        for cat in NOTIFY_CATEGORIES:
             expected = len(truth_by_cat.get(cat, []))
             actual = len(gemini_by_cat.get(cat, []))
             if expected > 0 and actual == 0:
@@ -229,7 +229,7 @@ def evaluate() -> None:
             elif abs(expected - actual) > 1:
                 issues.append(f"DIFF: {cat} 正解{expected}件 vs Gemini{actual}件")
 
-        bugfix_leaked = len(gemini_by_cat.get("Bugfix", []))
+        bugfix_leaked = len(gemini_by_cat.get(Category.BUGFIX, []))
         if bugfix_leaked > 0:
             issues.append(f"LEAK: Bugfix {bugfix_leaked}件が漏れ（除外されるべき）")
 
@@ -269,7 +269,7 @@ def evaluate() -> None:
     print("=" * 70)
     print(f"評価バージョン数: {len(target_versions)}")
 
-    for cat in ["Feature", "Improvement", "Change", "Breaking"]:
+    for cat in NOTIFY_CATEGORIES:
         expected = agg[cat]["expected"]
         actual = agg[cat]["actual"]
         if expected > 0:
@@ -278,8 +278,8 @@ def evaluate() -> None:
         else:
             print(f"  {cat}: 正解 0件 → Gemini {actual}件")
 
-    bugfix_total = agg["Bugfix"]["total"]
-    bugfix_leaked = agg["Bugfix"]["leaked"]
+    bugfix_total = agg[Category.BUGFIX]["total"]
+    bugfix_leaked = agg[Category.BUGFIX]["leaked"]
     if bugfix_total > 0:
         exclude_rate = (bugfix_total - bugfix_leaked) / bugfix_total * 100
         print(

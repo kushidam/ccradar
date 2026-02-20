@@ -43,15 +43,15 @@ allowed-tools:
    uv run python scripts/eval_prompt.py
    ```
    正解データのバージョンのみ自動で評価される。
-3. `scripts/eval_result.csv` を読み込み、初回スコアを記録する
+3. `scripts/eval_result_<timestamp>.csv`（最新のもの） を読み込み、初回スコアを記録する
 
 ### Phase 2: 問題分析
 
 **Task ツール（subagent_type=Explore）でサブエージェントに委譲する。**
-`scripts/eval_result.csv` の分析はサブエージェント内で完結させ、
+`scripts/eval_result_<timestamp>.csv`（最新のもの） の分析はサブエージェント内で完結させ、
 メインコンテキストには問題サマリのみ返すこと。
 
-`scripts/eval_result.csv` から以下を分析:
+`scripts/eval_result_<timestamp>.csv`（最新のもの） から以下を分析:
 - **FN（通知漏れ）**: `notify_match=false` かつ `truth_notify=true` の項目を全件抽出し、原因を特定する（最重要）
   - original テキストのマッチング失敗か、そもそも Gemini が項目を出力しなかったか
 - **FP（過検出）**: `notify_match=false` かつ `truth_notify=false` の項目（参考情報）

@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from google import genai
 from google.genai import types
 
+from src.categories import NOTIFY_CATEGORIES, Category
+
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
@@ -56,7 +58,7 @@ SYSTEM_PROMPT = """\
 class ClassifiedItem:
     """分類・要約済みのリリース項目。"""
 
-    category: str  # "Feature", "Improvement", "Breaking", or "Change"
+    category: Category
     summary: str
     original: str = ""  # 元の箇条書きテキスト
 
@@ -120,8 +122,8 @@ def _parse_response(raw_text: str) -> list[ClassifiedItem]:
         category = item.get("category", "")
         summary = item.get("summary", "")
         original = item.get("original", "")
-        if category in ("Feature", "Improvement", "Breaking", "Change") and summary:
-            result.append(ClassifiedItem(category=category, summary=summary, original=original))
+        if category in NOTIFY_CATEGORIES and summary:
+            result.append(ClassifiedItem(category=Category(category), summary=summary, original=original))
 
     logger.info("Classified %d relevant item(s)", len(result))
     return result
