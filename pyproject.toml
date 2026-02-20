@@ -1,0 +1,10 @@
+[project]
+name = "ccradar"
+version = "0.1.0"
+description = "Claude Code Release Radar — Claude Code のリリースから新機能・機能拡張を抽出し Slack 通知する Python システム"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31.0,<3.0.0",
+    "google-genai>=1.0.0",
+    "python-dotenv>=1.0.0",
+]
