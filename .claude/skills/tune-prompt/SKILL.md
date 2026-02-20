@@ -43,7 +43,7 @@ allowed-tools:
    uv run python scripts/eval_prompt.py
    ```
    正解データのバージョンのみ自動で評価される。
-3. `scripts/eval_result.json` を読み込み、初回スコアを記録する
+3. `scripts/eval_result.csv` を読み込み、初回スコアを記録する
 
 ### Phase 2: 問題分析
 
@@ -51,7 +51,9 @@ allowed-tools:
 eval 結果とリリースノート生テキストの突き合わせはサブエージェント内で完結させ、
 メインコンテキストには問題タイプ別サマリのみ返すこと。
 
-`eval_result.json` から以下を分析:
+`scripts/eval_result.csv` から以下を分析:
+- **通知漏れ**: truth_notify=true だが gemini_notify=false（最重要）
+- **過検出**: truth_notify=false だが gemini_notify=true
 - **MISS**: 正解カテゴリの項目を Gemini が 0 件返した（見落とし）
 - **EXTRA**: 正解にないカテゴリを Gemini が誤検出した
 - **DIFF**: カテゴリ件数が正解と大きく乖離している
@@ -91,9 +93,8 @@ AskUserQuestion で確認:
 
 ## 評価目標
 
-| 指標 | 目標 |
-|------|------|
-| Feature 検出率 | 80% 以上 |
-| Improvement 検出率 | 80% 以上 |
-| Bugfix 除外率 | 90% 以上 |
-| 完全見落とし（MISS） | 0 件 |
+| 指標 | 目標 | 備考 |
+|------|------|------|
+| 通知漏れ | 0 件 | 通知すべき項目が消えないこと（唯一のハード目標） |
+
+カテゴリ別検出率・Bugfix除外率・MISS/EXTRA/DIFF/LEAK は参考情報として残すが、目標値からは外す。

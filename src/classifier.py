@@ -41,7 +41,8 @@ SYSTEM_PROMPT = """\
   "items": [
     {
       "category": "Feature" または "Improvement" または "Breaking" または "Change",
-      "summary": "日本語での要約（1〜2文）"
+      "summary": "日本語での要約（1〜2文）",
+      "original": "元の箇条書きテキスト（先頭の '- ' を除いた原文そのまま）"
     }
   ]
 }
@@ -57,6 +58,7 @@ class ClassifiedItem:
 
     category: str  # "Feature", "Improvement", "Breaking", or "Change"
     summary: str
+    original: str = ""  # 元の箇条書きテキスト
 
 
 def classify_release(body: str) -> list[ClassifiedItem]:
@@ -117,8 +119,9 @@ def _parse_response(raw_text: str) -> list[ClassifiedItem]:
     for item in items:
         category = item.get("category", "")
         summary = item.get("summary", "")
+        original = item.get("original", "")
         if category in ("Feature", "Improvement", "Breaking", "Change") and summary:
-            result.append(ClassifiedItem(category=category, summary=summary))
+            result.append(ClassifiedItem(category=category, summary=summary, original=original))
 
     logger.info("Classified %d relevant item(s)", len(result))
     return result
