@@ -67,7 +67,7 @@ uv run python scripts/eval_prompt.py --build-truth --count 20
 |--------|------|------|
 | GEMINI_API_KEY | Yes | Gemini API キー |
 | SLACK_WEBHOOK_URL | Yes（dry-run 時は不要） | Slack Webhook URL |
-| GEMINI_MODEL | No | モデル名（デフォルト: gemini-3-0-flash） |
+| GEMINI_MODEL | No | モデル名（デフォルト: gemini-3.0-flash） |
 | GITHUB_TOKEN | No | GitHub API トークン（レート制限緩和用） |
 
 ## データソース
