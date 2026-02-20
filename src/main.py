@@ -9,7 +9,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.classifier import classify_release
-from src.github_client import get_new_releases, get_release_body, get_release_by_tag, get_release_version
+from src.github_client import (
+    fetch_changelog,
+    get_changelog_body,
+    get_new_releases,
+    get_release_body,
+    get_release_by_tag,
+    get_release_version,
+    parse_changelog,
+)
 from src.notifier import format_dry_run, notify
 from src.state import get_last_version, save_last_version
 
@@ -56,11 +64,16 @@ def main() -> None:
 
     logger.info("Processing %d new release(s)", len(new_releases))
 
-    # 3. 各リリースを処理
+    # 3. CHANGELOG.md を取得・パース（1回/実行）
+    changelog_content = fetch_changelog()
+    changelog_sections = parse_changelog(changelog_content) if changelog_content else {}
+
+    # 4. 各リリースを処理
     latest_version = None
     for release in new_releases:
         version = get_release_version(release)
-        body = get_release_body(release)
+        # CHANGELOG.md を優先、なければ Release body にフォールバック
+        body = get_changelog_body(version, changelog_sections) or get_release_body(release)
         logger.info("Processing release %s", version)
 
         # 分類・要約
@@ -70,12 +83,12 @@ def main() -> None:
             print(format_dry_run(version, items))
             print()
         else:
-            # 4. 通知送信（該当項目がある場合のみ）
+            # 5. 通知送信（該当項目がある場合のみ）
             notify(version, items)
 
         latest_version = version
 
-    # 5. 最新の処理済みバージョンで状態を更新
+    # 6. 最新の処理済みバージョンで状態を更新
     if latest_version and not args.dry_run:
         save_last_version(latest_version)
         logger.info("Updated last processed version to %s", latest_version)

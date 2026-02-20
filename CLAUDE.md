@@ -70,6 +70,12 @@ uv run python scripts/eval_prompt.py --build-truth --count 20
 | GEMINI_MODEL | No | モデル名（デフォルト: gemini-3-0-flash） |
 | GITHUB_TOKEN | No | GitHub API トークン（レート制限緩和用） |
 
+## データソース
+
+- **バージョン検出**: GitHub Releases API（タグベース）
+- **分類対象の本文**: CHANGELOG.md を優先し、取得失敗時は Release body にフォールバック
+- **既知の制約**: CHANGELOG.md にのみ存在し Release タグが未作成のバージョンは検出・通知の対象外
+
 ## コーディング規約
 
 - コメント・docstring は日本語で記述する
