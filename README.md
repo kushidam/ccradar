@@ -123,7 +123,7 @@ ccradar/
 ├── docs/                       # 要件定義書・設計ドキュメント
 ├── scripts/
 │   ├── eval_prompt.py          # プロンプト評価スクリプト
-│   └── ground_truth.json       # 評価用の正解データ
+│   └── ground_truth.csv       # 評価用の正解データ
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                 # エントリポイント
@@ -143,7 +143,7 @@ ccradar/
 
 | スキル | 説明 |
 |--------|------|
-| `/build-truth` | 正解データの選定・構築。GitHub Releases からパターンのバリエーションを網羅するリリースを選定し、`scripts/ground_truth.json` を生成する |
+| `/build-truth` | 正解データの選定・構築。GitHub Releases からパターンのバリエーションを網羅するリリースを選定し、`scripts/ground_truth.csv` を生成する |
 | `/tune-prompt` | 分類プロンプトの自動評価・最適化。正解データに対して `src/classifier.py` の `SYSTEM_PROMPT` を反復的に改善する |
 
 ### ワークフロー

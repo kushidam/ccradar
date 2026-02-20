@@ -15,7 +15,7 @@ allowed-tools:
 
 # 正解データ選定スキル
 
-プロンプト評価に使う正解データ（`scripts/ground_truth.json`）を、
+プロンプト評価に使う正解データ（`scripts/ground_truth.csv`）を、
 パターンのバリエーション基準で選定・構築する。
 $ARGUMENTS に候補取得件数が指定されていれば使用し、未指定時は 15 件。
 
@@ -92,7 +92,7 @@ v2.1.47    |    ✓    |           |     ✓     |          |          |    ✓ 
 3. 修正案をバージョンごとに一覧表示し、**AskUserQuestion ツールを使用して**ユーザーに確認する。
    各バージョンについて、変更した項目のカテゴリ割り当てが正しいか承認を得る。
 
-4. 承認後 `scripts/ground_truth.json` を保存
+4. 承認後 `scripts/ground_truth.csv` を保存
 
 ### Step 6: ドキュメント更新
 

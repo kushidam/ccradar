@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """プロンプト評価スクリプト。
 
-正解データ（scripts/ground_truth.json）を基に Gemini 分類プロンプトの精度を評価する。
+正解データ（scripts/ground_truth.csv）を基に Gemini 分類プロンプトの精度を評価する。
 正解データが未作成の場合は --build-truth で自動生成 → Claude がレビュー → ユーザー承認のフローで作成する。
 
 Usage:
@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import csv
 import json
 import logging
 import re
@@ -40,7 +41,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-GROUND_TRUTH_PATH = PROJECT_ROOT / "scripts" / "ground_truth.json"
+GROUND_TRUTH_PATH = PROJECT_ROOT / "scripts" / "ground_truth.csv"
 EVAL_RESULT_PATH = PROJECT_ROOT / "scripts" / "eval_result.json"
 
 # 先頭動詞 → 正解カテゴリのマッピング
@@ -59,7 +60,7 @@ def extract_items_from_body(body: str) -> list[dict]:
     """リリースボディから箇条書き項目を抽出し、先頭動詞で仮分類する。
 
     Returns:
-        [{"text": "原文", "category": "Feature"|...|"Unknown", "auto": True|False}, ...]
+        [{"text": "原文", "category": "Feature"|...|"Unknown"}, ...]
     """
     items = []
     for line in body.split("\n"):
@@ -73,7 +74,7 @@ def extract_items_from_body(body: str) -> list[dict]:
         first_word = clean.split()[0].lower().rstrip(":") if clean else ""
         category = VERB_TO_CATEGORY.get(first_word, "Unknown")
 
-        items.append({"text": text, "category": category, "auto": category != "Unknown"})
+        items.append({"text": text, "category": category})
 
     return items
 
@@ -91,7 +92,7 @@ def fetch_releases_by_versions(version_list: list[str]) -> list[dict]:
 
 
 def build_truth(count: int, version_list: list[str] | None = None) -> None:
-    """先頭動詞ベースで正解データの草案を生成し JSON に保存する。
+    """先頭動詞ベースで正解データの草案を生成し CSV に保存する。
 
     Unknown 項目は Claude がレビュー・補完する前提。
     """
@@ -106,9 +107,8 @@ def build_truth(count: int, version_list: list[str] | None = None) -> None:
 
     print(f"Fetched {len(releases)} releases")
 
-    versions = {}
+    rows = []
     unknown_count = 0
-    total_count = 0
 
     for release in releases:
         version = get_release_version(release)
@@ -117,15 +117,17 @@ def build_truth(count: int, version_list: list[str] | None = None) -> None:
             continue
 
         items = extract_items_from_body(body)
-        versions[version] = items
-        total_count += len(items)
-        unknown_count += sum(1 for i in items if i["category"] == "Unknown")
+        for item in items:
+            rows.append({"version": version, "category": item["category"], "text": item["text"]})
+            if item["category"] == "Unknown":
+                unknown_count += 1
 
-    truth_data = {"versions": versions}
+    with open(GROUND_TRUTH_PATH, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["version", "category", "text"])
+        writer.writeheader()
+        writer.writerows(rows)
 
-    with open(GROUND_TRUTH_PATH, "w") as f:
-        json.dump(truth_data, f, ensure_ascii=False, indent=2)
-
+    total_count = len(rows)
     print(f"\n正解データ草案を保存: {GROUND_TRUTH_PATH}")
     print(f"  総項目数: {total_count}")
     print(f"  自動分類: {total_count - unknown_count}件")
@@ -134,16 +136,22 @@ def build_truth(count: int, version_list: list[str] | None = None) -> None:
 
 
 def load_ground_truth() -> dict[str, list[dict]]:
-    """保存済みの正解データを読み込む。"""
+    """保存済みの正解データ（CSV）を読み込み、バージョンごとにグループ化して返す。"""
     if not GROUND_TRUTH_PATH.exists():
         print(f"正解データが見つかりません: {GROUND_TRUTH_PATH}")
         print("先に --build-truth で正解データを作成してください。")
         sys.exit(1)
 
-    with open(GROUND_TRUTH_PATH) as f:
-        data = json.load(f)
+    versions: dict[str, list[dict]] = {}
+    with open(GROUND_TRUTH_PATH, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            ver = row["version"]
+            if ver not in versions:
+                versions[ver] = []
+            versions[ver].append({"text": row["text"], "category": row["category"]})
 
-    return data.get("versions", {})
+    return versions
 
 
 def evaluate(count: int) -> dict:

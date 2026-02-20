@@ -1,7 +1,7 @@
 ---
 description: Gemini 分類プロンプトを自動評価・最適化する
 user_invocable: true
-argument_description: 引数なし。正解データ（ground_truth.json）のバージョンで評価する
+argument_description: 引数なし。正解データ（ground_truth.csv）のバージョンで評価する
 allowed-tools:
   - AskUserQuestion
   - Bash(uv run python:*)
@@ -14,21 +14,21 @@ allowed-tools:
 # プロンプト調整スキル
 
 `src/classifier.py` の `SYSTEM_PROMPT` を反復的に最適化する。
-評価対象は `scripts/ground_truth.json` に含まれるバージョン。
+評価対象は `scripts/ground_truth.csv` に含まれるバージョン。
 
 ## 前提
 
 - 評価スクリプト: `scripts/eval_prompt.py`
-- 正解データ: `scripts/ground_truth.json`（`/build-truth` で作成）
+- 正解データ: `scripts/ground_truth.csv`（`/build-truth` で作成）
 - 選定基準: `docs/ground-truth-selection.md`
 
 ## ワークフロー
 
 ### Phase 0: 正解データの確認
 
-`scripts/ground_truth.json` が存在しない場合:
+`scripts/ground_truth.csv` が存在しない場合:
 - **AskUserQuestion ツールを使用して**ユーザーに案内する:
-  - question: "正解データ（ground_truth.json）が見つかりません。先に作成しますか？"
+  - question: "正解データ（ground_truth.csv）が見つかりません。先に作成しますか？"
   - options: "/build-truth を実行する" / "中止する"
 
 存在する場合:

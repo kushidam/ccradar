@@ -23,7 +23,7 @@ src/
   state.py          # 処理済みバージョン管理（data/state.json）
 scripts/
   eval_prompt.py    # プロンプト評価スクリプト（正解データ生成・精度評価）
-  ground_truth.json # 評価用の正解データ
+  ground_truth.csv # 評価用の正解データ
 data/
   state.json        # 状態ファイル（Git 管理、Actions が自動コミット）
 docs/               # 要件定義書・設計ドキュメント
