@@ -51,7 +51,7 @@ def classify_release(body: str) -> list[ClassifiedItem]:
         logger.info("Empty release body, skipping classification")
         return []
 
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
+    model_name = os.environ.get("GEMINI_MODEL") or "gemini-3-flash-preview"
     logger.info("Using Gemini model: %s", model_name)
 
     client = _get_client()
