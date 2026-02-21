@@ -126,7 +126,7 @@ ccradar/
 │       └── release-radar.yml   # GitHub Actions ワークフロー
 ├── data/
 │   └── state.json              # 処理済みバージョンの状態ファイル
-├── docs/                       # 要件定義書・設計ドキュメント
+├── docs/                       # ドキュメント
 ├── scripts/
 │   ├── eval_prompt.py          # プロンプト評価スクリプト
 │   └── ground_truth.csv       # 評価用の正解データ

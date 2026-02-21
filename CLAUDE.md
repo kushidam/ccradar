@@ -28,7 +28,7 @@ scripts/
   ground_truth.csv # 評価用の正解データ
 data/
   state.json        # 状態ファイル（Git 管理、Actions が自動コミット）
-docs/               # 要件定義書・設計ドキュメント
+docs/               # ドキュメント
 .github/workflows/
   release-radar.yml
 ```
@@ -39,17 +39,11 @@ docs/               # 要件定義書・設計ドキュメント
 # 依存インストール（仮想環境作成 + パッケージインストール）
 uv sync
 
-# 環境変数の設定（初回のみ）
-cp .env.example .env && vi .env
-
 # dry-run（Slack 送信なし、state.json 更新なし）
 uv run python -m src.main --dry-run
 
 # 特定バージョンのみ処理（検証用）
 uv run python -m src.main --dry-run --version 2.1.47
-
-# 本番実行
-uv run python -m src.main
 
 # プロンプト評価（正解データに対する分類精度を測定）
 uv run python scripts/eval_prompt.py
@@ -60,6 +54,7 @@ uv run python scripts/build_truth.py --versions 2.1.45,2.1.49,2.1.47,2.1.44
 # 正解データの草案生成（直近 N 件から）
 uv run python scripts/build_truth.py --count 20
 ```
+プロンプト評価や正解データ作成はSkillがあります。
 
 **注意**: `python src/main.py` ではなく `python -m src.main` で実行すること（インポート解決のため）。
 
