@@ -28,8 +28,7 @@ SYSTEM_PROMPT = """\
 
 ## 抽出ルール
 
-- Feature, Improvement, Breaking, Change に該当する項目のみを抽出してください
-- Bugfix は全てスキップしてください（"Fixed" で始まる項目は出力に含めない）
+- すべての項目を分類・抽出してください
 - プラットフォーム固有の項目（[VSCode] 等）も対象に含めてください
 
 ## 出力形式
@@ -38,7 +37,7 @@ SYSTEM_PROMPT = """\
 {
   "items": [
     {
-      "category": "Feature" または "Improvement" または "Breaking" または "Change",
+      "category": "Feature" または "Improvement" または "Bugfix" または "Breaking" または "Change",
       "summary": "日本語での要約（1〜2文）",
       "original": "入力の箇条書きから '- ' を取り除いただけの原文テキスト"
     }
