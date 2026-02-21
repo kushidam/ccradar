@@ -79,6 +79,12 @@ GitHub Actions が毎日 9:00 (JST) にワークフローを実行し、`data/st
 | `GEMINI_API_KEY` | Google AI Studio で取得した API キー |
 | `SLACK_WEBHOOK_URL` | Slack Incoming Webhook の URL |
 
+5. （任意）**Environment variables** にモデル名を登録:
+
+| Variable 名 | デフォルト値 | 説明 |
+|---|---|---|
+| `GEMINI_MODEL` | `gemini-3-flash-preview` | 使用する Gemini モデル |
+
 ### 4. 手動実行でテスト
 
 1. GitHub リポジトリの **Actions** タブを開く

@@ -34,6 +34,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
         run: uv run python -m src.main
 
       - name: 状態ファイルをコミット＆プッシュ
