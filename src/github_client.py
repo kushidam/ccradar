@@ -9,7 +9,6 @@
 """
 
 import logging
-import os
 import re
 from typing import Optional
 
@@ -23,12 +22,8 @@ API_BASE = "https://api.github.com"
 
 
 def _get_headers() -> dict:
-    """リクエストヘッダーを構築する。GITHUB_TOKEN があれば認証ヘッダーを付与。"""
-    headers = {"Accept": "application/vnd.github+json"}
-    token = os.environ.get("GITHUB_TOKEN")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
+    """リクエストヘッダーを構築する。"""
+    return {"Accept": "application/vnd.github+json"}
 
 
 def fetch_releases(per_page: int = 30) -> list[dict]:

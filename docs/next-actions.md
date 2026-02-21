@@ -46,7 +46,7 @@ python -m src.main --dry-run
 |--------|------|------|
 | `ModuleNotFoundError` | venv 未活性 or パッケージ未インストール | `source .venv/bin/activate && pip install -r requirements.txt` |
 | `GEMINI_API_KEY ... is not set` | 環境変数が未設定 | `export GEMINI_API_KEY="..."` を確認 |
-| `requests.exceptions.HTTPError: 403` | GitHub API レート制限 | `export GITHUB_TOKEN="ghp_..."` を設定 |
+| `requests.exceptions.HTTPError: 403` | GitHub API レート制限 | 時間を置いて再実行（未認証: 60 リクエスト/時） |
 | Gemini API エラー | APIキー無効 or モデル名不正 | Google AI Studio でキーを再確認 |
 
 ---

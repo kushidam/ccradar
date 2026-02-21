@@ -108,8 +108,7 @@ uv run python -m src.main
 |---|---|---|
 | `GEMINI_API_KEY` | Yes | Google Gemini API のキー |
 | `SLACK_WEBHOOK_URL` | Yes | Slack Incoming Webhook の URL（`--dry-run` 時は不要） |
-| `GEMINI_MODEL` | No | 使用する Gemini モデル（デフォルト: `gemini-3.0-flash`） |
-| `GITHUB_TOKEN` | No | GitHub API トークン（レート制限緩和用、未設定でも動作可） |
+| `GEMINI_MODEL` | No | 使用する Gemini モデル（デフォルト: `gemini-3-flash-preview`） |
 
 ## ディレクトリ構成
 
