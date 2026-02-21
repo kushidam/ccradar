@@ -11,6 +11,36 @@ from src.classifier import ClassifiedItem
 logger = logging.getLogger(__name__)
 
 
+_SLACK_SECTION_MAX_LENGTH = 3000
+
+
+def _build_section_blocks(header: str, items: list[ClassifiedItem]) -> list[dict]:
+    """カテゴリ1種類分の section ブロックを構築する。
+
+    テキストが Slack の制限（3000文字）を超える場合は複数ブロックに分割する。
+    """
+    blocks: list[dict] = []
+    current_lines: list[str] = []
+    current_len = len(header) + 1  # ヘッダー + 改行
+
+    for item in items:
+        line = f"  - {item.summary}"
+        line_len = len(line) + 1  # 改行分
+        if current_len + line_len > _SLACK_SECTION_MAX_LENGTH and current_lines:
+            text = f"{header}\n" + "\n".join(current_lines)
+            blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
+            current_lines = []
+            current_len = len(header) + 1
+        current_lines.append(line)
+        current_len += line_len
+
+    if current_lines:
+        text = f"{header}\n" + "\n".join(current_lines)
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": text}})
+
+    return blocks
+
+
 def _build_blocks(version: str, items: list[ClassifiedItem]) -> list[dict]:
     """通知用の Slack Block Kit ブロックを構築する。"""
     features = [item for item in items if item.category == Category.FEATURE]
@@ -29,44 +59,16 @@ def _build_blocks(version: str, items: list[ClassifiedItem]) -> list[dict]:
     ]
 
     if breakings:
-        breaking_text = "\n".join(f"  - {b.summary}" for b in breakings)
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*:warning: Breaking Changes*\n{breaking_text}",
-            },
-        })
+        blocks.extend(_build_section_blocks("*:warning: Breaking Changes*", breakings))
 
     if features:
-        feature_text = "\n".join(f"  - {f.summary}" for f in features)
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*:sparkles: New Features*\n{feature_text}",
-            },
-        })
+        blocks.extend(_build_section_blocks("*:sparkles: New Features*", features))
 
     if improvements:
-        improvement_text = "\n".join(f"  - {i.summary}" for i in improvements)
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*:arrow_up: Improvements*\n{improvement_text}",
-            },
-        })
+        blocks.extend(_build_section_blocks("*:arrow_up: Improvements*", improvements))
 
     if changes:
-        change_text = "\n".join(f"  - {c.summary}" for c in changes)
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*:arrows_counterclockwise: Changes*\n{change_text}",
-            },
-        })
+        blocks.extend(_build_section_blocks("*:arrows_counterclockwise: Changes*", changes))
 
     blocks.append({
         "type": "context",

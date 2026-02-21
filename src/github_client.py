@@ -9,6 +9,7 @@
 """
 
 import logging
+import os
 import re
 from typing import Optional
 
@@ -22,8 +23,12 @@ API_BASE = "https://api.github.com"
 
 
 def _get_headers() -> dict:
-    """リクエストヘッダーを構築する。"""
-    return {"Accept": "application/vnd.github+json"}
+    """リクエストヘッダーを構築する。GITHUB_TOKEN があれば認証ヘッダーを付与する。"""
+    headers = {"Accept": "application/vnd.github+json"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 def fetch_releases(per_page: int = 30) -> list[dict]:
@@ -62,11 +67,21 @@ def get_new_releases(last_version: Optional[str] = None) -> list[dict]:
         return [releases[0]]
 
     new_releases = []
+    found = False
     for release in releases:
         tag = release.get("tag_name", "").lstrip("v")
         if tag == last_version:
+            found = True
             break
         new_releases.append(release)
+
+    if not found:
+        logger.warning(
+            "last_version %s not found in fetched releases. "
+            "Returning latest release only to avoid duplicate notifications.",
+            last_version,
+        )
+        return [releases[0]]
 
     # 時系列順に処理するため古い順に並び替え
     new_releases.reverse()

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   check-releases:
@@ -34,9 +35,21 @@ jobs:
         run: uv run python -m src.main
 
       - name: 状態ファイルをコミット＆プッシュ
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/state.json
-          git diff --staged --quiet || git commit -m "Update state.json [skip ci]"
-          git push
+          git diff --staged --quiet && exit 0
+          git commit -m "Update state.json [skip ci]"
+          if ! git push; then
+            echo "::warning::git push failed, creating PR as fallback"
+            BRANCH="auto/update-state-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH"
+            git push -u origin "$BRANCH"
+            gh pr create \
+              --title "Update state.json" \
+              --body "Direct push to main failed (likely due to a concurrent run). Please merge this PR to update the state file." \
+              --base main
+          fi

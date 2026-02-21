@@ -1,5 +1,6 @@
 """Gemini API を使用した LLM ベースの分類・要約モジュール。"""
 
+import json
 import logging
 import os
 from dataclasses import dataclass
@@ -12,6 +13,19 @@ from src.categories import NOTIFY_CATEGORIES, Category
 from src.prompts import SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
+
+_client: genai.Client | None = None
+
+
+def _get_client() -> genai.Client:
+    """Gemini クライアントを取得する（シングルトン）。"""
+    global _client
+    if _client is None:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY environment variable is not set")
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 
 @dataclass
@@ -37,14 +51,10 @@ def classify_release(body: str) -> list[ClassifiedItem]:
         logger.info("Empty release body, skipping classification")
         return []
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-
     model_name = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
     logger.info("Using Gemini model: %s", model_name)
 
-    client = genai.Client(api_key=api_key)
+    client = _get_client()
     try:
         response = client.models.generate_content(
             model=model_name,
@@ -72,8 +82,6 @@ def classify_release(body: str) -> list[ClassifiedItem]:
 
 def _parse_response(raw_text: str) -> list[ClassifiedItem]:
     """Gemini のレスポンス JSON を ClassifiedItem リストにパースする。"""
-    import json
-
     # マークダウンのコードブロック記号を除去
     text = raw_text
     if text.startswith("```"):
