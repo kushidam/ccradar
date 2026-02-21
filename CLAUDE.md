@@ -19,6 +19,7 @@ src/
   main.py           # エントリーポイント
   github_client.py  # GitHub API クライアント
   classifier.py     # Gemini による分類・要約
+  prompts.py        # Gemini API 用システムプロンプト
   notifier.py       # Slack 通知
   state.py          # 処理済みバージョン管理（data/state.json）
 scripts/

@@ -13,7 +13,7 @@ allowed-tools:
 
 # プロンプト調整スキル
 
-`src/classifier.py` の `SYSTEM_PROMPT` を反復的に最適化する。
+`src/prompts.py` の `SYSTEM_PROMPT` を反復的に最適化する。
 評価対象は `scripts/ground_truth.csv` に含まれるバージョン。
 
 ## 前提
@@ -37,7 +37,7 @@ allowed-tools:
 
 ### Phase 1: 現状評価
 
-1. 現在の `SYSTEM_PROMPT` を `src/classifier.py` から読み取り記録する（Before）
+1. 現在の `SYSTEM_PROMPT` を `src/prompts.py` から読み取り記録する（Before）
 2. 評価スクリプトを実行:
    ```bash
    uv run python scripts/eval_prompt.py
@@ -64,7 +64,7 @@ FN の各項目について、リリースノートのパターンを確認す�
 
 ### Phase 3: プロンプト改善
 
-`src/classifier.py` の `SYSTEM_PROMPT` を修正する。典型的な改善ポイント:
+`src/prompts.py` の `SYSTEM_PROMPT` を修正する。典型的な改善ポイント:
 - 分類基準の明確化・具体例の追加
 - 先頭動詞がない項目の分類ガイダンス追加
 - Bugfix 除外ルールの強化
@@ -82,7 +82,7 @@ FN の各項目について、リリースノートのパターンを確認す�
 以下を出力した後、**AskUserQuestion ツールを使用して**ユーザーに最終確認する:
 
 1. **FN/FP 比較テーブル**: 初回 → 最終の FN・FP 件数
-2. **SYSTEM_PROMPT の diff**: 変更前後の差分
+2. **SYSTEM_PROMPT の diff**: `src/prompts.py` の変更前後の差分
 3. **残存課題**: FN が 0 に到達しなかった場合、該当項目と原因
 
 AskUserQuestion で確認:
