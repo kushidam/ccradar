@@ -51,6 +51,8 @@ GitHub Actions が毎日 9:00 (JST) にワークフローを実行し、`data/st
 
 ### 1. Slack Incoming Webhook の作成
 
+> 📎 [Sending messages using incoming webhooks - Slack](https://api.slack.com/messaging/webhooks)
+
 1. [Slack API: Incoming Webhooks](https://api.slack.com/messaging/webhooks) にアクセス
 2. 「Create your Slack app」からアプリを作成（または既存アプリを使用）
 3. 「Incoming Webhooks」を有効化
@@ -63,9 +65,14 @@ GitHub Actions が毎日 9:00 (JST) にワークフローを実行し、`data/st
 2. 「Get API key」からAPIキーを作成
 3. 生成された API キーをコピー
 
-### 3. GitHub Secrets の設定
+### 3. GitHub Environment の設定
 
-リポジトリの Settings > Secrets and variables > Actions で以下を登録:
+> 📎 [Using environments for deployment - GitHub Docs](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
+
+1. リポジトリの **Settings > Environments** を開く
+2. 「**New environment**」をクリックし、名前を `production` にして作成
+3. **Deployment branches** で「Selected branches and tags」を選択し、`main` ブランチのみに制限
+4. **Environment secrets** に以下を登録:
 
 | Secret 名 | 値 |
 |---|---|
@@ -136,17 +143,61 @@ ccradar/
 └── uv.lock
 ```
 
-## Claude Code Skills
+## プロンプト品質管理
 
-本プロジェクトでは [Claude Code](https://docs.anthropic.com/en/docs/claude-code) のカスタムスキルを使って分類プロンプトの品質管理を行っています。
+Gemini の分類精度を維持・改善するため、正解データベースの評価パイプラインを用意しています。
+
+### 正解データ（Ground Truth）
+
+`scripts/ground_truth.csv` に正解データを格納しています。
+
+```csv
+version,category,text
+2.1.47,Bugfix,Fixed FileWriteTool line counting to preserve intentional trailing blank lines ...
+2.1.47,Improvement,"Improved VS Code plan preview: auto-updates as Claude iterates, ..."
+```
+
+| 列 | 説明 |
+|----|------|
+| `version` | リリースバージョン |
+| `category` | 正解カテゴリ（Feature / Improvement / Change / Breaking / Bugfix） |
+| `text` | リリースノートの原文 |
+
+#### 正解データの作成
+
+```bash
+# 特定バージョンを指定して草案を生成
+uv run python scripts/build_truth.py --versions 2.1.45,2.1.49,2.1.47
+
+# 直近 N 件のリリースから草案を生成
+uv run python scripts/build_truth.py --count 20
+```
+
+先頭動詞（Added → Feature、Fixed → Bugfix 等）で仮分類した草案が `scripts/ground_truth.csv` に出力されます。`Unknown` と分類された項目は手動でカテゴリを割り当ててください。
+
+リリースの選定基準は `docs/ground-truth-selection.md` を参照してください。
+
+### 評価の実行
+
+```bash
+uv run python scripts/eval_prompt.py
+```
+
+正解データのバージョンに対して Gemini 分類を実行し、項目レベルで突き合わせます。結果は `scripts/eval_result_<timestamp>.csv` に出力されます。
+
+**最重要指標は FN（通知漏れ）= 0 件** — 通知すべき項目が漏れないことがハード目標です。FP（過検出）は許容します。
+
+### Claude Code Skills
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code) のカスタムスキルで上記の作業を自動化できます。
 
 | スキル | 説明 |
 |--------|------|
-| `/build-truth` | 正解データの選定・構築。GitHub Releases からパターンのバリエーションを網羅するリリースを選定し、`scripts/ground_truth.csv` を生成する |
-| `/tune-prompt` | 分類プロンプトの自動評価・最適化。正解データに対して `src/classifier.py` の `SYSTEM_PROMPT` を反復的に改善する |
+| `/build-truth` | 正解データの選定・構築。パターンのバリエーションを網羅する 3〜5 リリースを選定し、`ground_truth.csv` を生成 |
+| `/tune-prompt` | 分類プロンプトの自動評価・最適化。正解データに対して `src/prompts.py` の `SYSTEM_PROMPT` を反復的に改善（最大 3 回） |
 
-### ワークフロー
+#### ワークフロー
 
-1. `/build-truth` で評価用の正解データを作成（パターン網羅性を基準に 3〜5 リリースを選定）
-2. `/tune-prompt` で現在のプロンプトの精度を評価し、自動で改善を反復（最大 3 回）
+1. `/build-truth` で評価用の正解データを作成
+2. `/tune-prompt` で現在のプロンプトの精度を評価し、FN = 0 を目指して自動改善
 
