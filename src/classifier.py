@@ -41,7 +41,7 @@ def classify_release(body: str) -> list[ClassifiedItem]:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-3.0-flash")
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
     logger.info("Using Gemini model: %s", model_name)
 
     client = genai.Client(api_key=api_key)
