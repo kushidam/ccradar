@@ -31,10 +31,17 @@ SYSTEM_PROMPT = """\
 - Change: 動作変更・非推奨化・削除・デフォルト値変更（例: モデルの入れ替え、設定の移動）
 - Breaking: 破壊的変更・後方互換性のない変更
 
+## 分類の判断基準
+
+- "Fixed" で始まる項目は原則 Bugfix です。内容がセキュリティ修正やポリシー変更に見えても、"Fixed" で始まるなら Bugfix としてください。
+- "Improved" で始まる項目は Improvement です。
+- "Added" で始まる項目は Feature です。
+- 動詞なしで始まる項目（例: "Simple mode now includes ...", "Sonnet 4.5 is being removed ..."）は、内容に基づいて Feature / Improvement / Change のいずれかに分類してください。
+
 ## 抽出ルール
 
 - Feature, Improvement, Breaking, Change に該当する項目のみを抽出してください
-- Bugfix は原則スキップしてください。ただしセキュリティ修正は Change として含めてください
+- Bugfix は全てスキップしてください（"Fixed" で始まる項目は出力に含めない）
 - プラットフォーム固有の項目（[VSCode] 等）も対象に含めてください
 
 ## 出力形式
@@ -45,10 +52,17 @@ SYSTEM_PROMPT = """\
     {
       "category": "Feature" または "Improvement" または "Breaking" または "Change",
       "summary": "日本語での要約（1〜2文）",
-      "original": "元の箇条書きテキスト（先頭の '- ' を除いた原文そのまま）"
+      "original": "入力の箇条書きから '- ' を取り除いただけの原文テキスト"
     }
   ]
 }
+
+### original フィールドの重要な注意
+
+original には入力テキストの原文をそのままコピーしてください。
+- バッククォート（`）、括弧、issue参照（#12345）等のマークダウン記法をそのまま保持すること
+- 要約や言い換えをしないこと
+- 文字の追加・削除・変更をしないこと
 
 該当する項目がない場合は空のリストを返してください:
 {"items": []}
