@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import sys
 
 from dotenv import load_dotenv
 
@@ -47,7 +46,7 @@ def main() -> None:
     if args.version:
         release = get_release_by_tag(args.version)
         if not release:
-            logger.info("Release %s not found on GitHub", args.version)
+            logger.warning("Release %s not found on GitHub", args.version)
             return
         new_releases = [release]
     else:
@@ -70,14 +69,20 @@ def main() -> None:
 
     # 4. 各リリースを処理
     latest_version = None
+    failed_versions = []
     for release in new_releases:
         version = get_release_version(release)
         # CHANGELOG.md を優先、なければ Release body にフォールバック
         body = get_changelog_body(version, changelog_sections) or get_release_body(release)
         logger.info("Processing release %s", version)
 
-        # 分類・要約
-        items = classify_release(body)
+        try:
+            # 分類・要約
+            items = classify_release(body)
+        except Exception:
+            logger.error("Failed to classify release %s, skipping", version, exc_info=True)
+            failed_versions.append(version)
+            continue
 
         if args.dry_run:
             print(format_dry_run(version, items))
@@ -93,7 +98,10 @@ def main() -> None:
         save_last_version(latest_version)
         logger.info("Updated last processed version to %s", latest_version)
 
-    logger.info("Done")
+    if failed_versions:
+        logger.error("Done with %d failure(s): %s", len(failed_versions), ", ".join(failed_versions))
+    else:
+        logger.info("Done")
 
 
 if __name__ == "__main__":

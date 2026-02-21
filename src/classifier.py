@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from google import genai
 from google.genai import types
+from google.genai.errors import ClientError
 
 from src.categories import NOTIFY_CATEGORIES, Category
 
@@ -85,13 +86,24 @@ def classify_release(body: str) -> list[ClassifiedItem]:
     logger.info("Using Gemini model: %s", model_name)
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=model_name,
-        contents=body,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-        ),
-    )
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=body,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+            ),
+        )
+    except ClientError as e:
+        if e.code == 429:
+            logger.warning(
+                "Gemini API rate limit exceeded (429). "
+                "Free tier quota may be exhausted. "
+                "Please wait and retry later. Detail: %s",
+                e.message,
+            )
+            raise
+        raise
 
     raw_text = response.text.strip()
     logger.debug("Gemini response: %s", raw_text)
