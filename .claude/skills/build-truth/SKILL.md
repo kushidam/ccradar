@@ -81,7 +81,7 @@ v2.1.47    |    ✓    |           |     ✓     |          |          |    ✓ 
 
 1. 各項目を先頭動詞で仮分類:
    ```bash
-   uv run python scripts/eval_prompt.py --build-truth --versions {v1},{v2},{v3},{v4}
+   uv run python scripts/build_truth.py --versions {v1},{v2},{v3},{v4}
    ```
 
 2. Unknown 項目をレビューして適切なカテゴリを付与:
