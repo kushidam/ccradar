@@ -135,6 +135,7 @@ ccradar/
 ├── docs/                       # ドキュメント
 ├── scripts/
 │   ├── eval_prompt.py          # プロンプト評価スクリプト
+│   ├── build_truth.py　　　　　　# 正解データ草案の生成スクリプト
 │   └── ground_truth.csv       # 評価用の正解データ
 ├── src/
 │   ├── __init__.py
