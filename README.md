@@ -154,6 +154,20 @@ ccradar/
 
 Gemini の分類精度を維持・改善するため、正解データベースの評価パイプラインを用意しています。
 
+```
+build_truth.py              eval_prompt.py
+     │                           │
+     ▼                           ▼
+GitHub API  ──→  ground_truth.csv  ──→  Gemini API
+(リリース取得)     (正解データ)           (分類実行)
+                       │                      │
+                       └──── 比較・評価 ───────┘
+                                 │
+                                 ▼
+                          eval_result_*.csv
+                          (精度レポート)
+```
+
 ### 正解データ（Ground Truth）
 
 `scripts/ground_truth.csv` に正解データを格納しています。
