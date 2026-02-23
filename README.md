@@ -134,8 +134,9 @@ ccradar/
 │   └── state.json              # 処理済みバージョンの状態ファイル
 ├── docs/                       # ドキュメント
 ├── scripts/
+│   ├── build_truth.py　　　　　　# 正解データ草案の生成スクリプト
 │   ├── eval_prompt.py          # プロンプト評価スクリプト
-│   └── ground_truth.csv       # 評価用の正解データ
+│   └── ground_truth.csv        # 評価用の正解データ
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                 # エントリポイント
