@@ -131,8 +131,8 @@ def main():
     parser.add_argument(
         "--count",
         type=int,
-        default=20,
-        help="直近 N 件から生成（デフォルト: 20）",
+        default=15,
+        help="直近 N 件から生成（デフォルト: 15）",
     )
     parser.add_argument(
         "--versions",
