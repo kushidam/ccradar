@@ -154,6 +154,20 @@ ccradar/
 
 Gemini の分類精度を維持・改善するため、正解データベースの評価パイプラインを用意しています。
 
+```
+build_truth.py              eval_prompt.py
+     │                           │
+     ▼                           ▼
+GitHub API  ──→  ground_truth.csv  ──→  Gemini API
+(リリース取得)     (正解データ)           (分類実行)
+                       │                      │
+                       └──── 比較・評価 ───────┘
+                                 │
+                                 ▼
+                          eval_result_*.csv
+                          (精度レポート)
+```
+
 ### 正解データ（Ground Truth）
 
 `scripts/ground_truth.csv` に正解データを格納しています。
@@ -192,7 +206,9 @@ uv run python scripts/eval_prompt.py
 
 正解データのバージョンに対して Gemini 分類を実行し、項目レベルで突き合わせます。結果は `scripts/eval_result_<timestamp>.csv` に出力されます。
 
-**最重要指標は FN（通知漏れ）= 0 件** — 通知すべき項目が漏れないことがハード目標です。FP（過検出）は許容します。
+主な評価指標:
+- **FN（通知漏れ）**: 通知すべき項目を Gemini が検出しなかった件数
+- **FP（過検出）**: 通知不要な項目を Gemini が通知対象と判定した件数
 
 ### Claude Code Skills
 
@@ -203,8 +219,15 @@ uv run python scripts/eval_prompt.py
 | `/build-truth` | 正解データの選定・構築。パターンのバリエーションを網羅する 3〜5 リリースを選定し、`ground_truth.csv` を生成 |
 | `/tune-prompt` | 分類プロンプトの自動評価・最適化。正解データに対して `src/prompts.py` の `SYSTEM_PROMPT` を反復的に改善（最大 3 回） |
 
+スクリプト（`build_truth.py` / `eval_prompt.py`）は単機能の実行ツールです。Skills はそれらをラップし、前後の判断・対話・反復を自動化します。
+
+| | スクリプト単体 | Skill 経由 |
+|---|---|---|
+| 正解データ作成 | 先頭動詞で仮分類して CSV 出力 | + リリース選定（パターン網羅分析）→ ユーザー確認 → Unknown レビュー・補完 |
+| プロンプト評価 | 正解データに対して 1 回評価 | + FN 分析 → プロンプト修正 → 再評価を最大 3 回反復 |
+
 #### ワークフロー
 
 1. `/build-truth` で評価用の正解データを作成
-2. `/tune-prompt` で現在のプロンプトの精度を評価し、FN = 0 を目指して自動改善
+2. `/tune-prompt` で現在のプロンプトの精度を評価し、FN（通知漏れ）= 0 件を目指してプロンプトを自動調整
 
