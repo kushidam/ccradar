@@ -206,7 +206,9 @@ uv run python scripts/eval_prompt.py
 
 正解データのバージョンに対して Gemini 分類を実行し、項目レベルで突き合わせます。結果は `scripts/eval_result_<timestamp>.csv` に出力されます。
 
-**最重要指標は FN（通知漏れ）= 0 件** — 通知すべき項目が漏れないことがハード目標です。FP（過検出）は許容します。
+主な評価指標:
+- **FN（通知漏れ）**: 通知すべき項目を Gemini が検出しなかった件数
+- **FP（過検出）**: 通知不要な項目を Gemini が通知対象と判定した件数
 
 ### Claude Code Skills
 
@@ -227,5 +229,5 @@ uv run python scripts/eval_prompt.py
 #### ワークフロー
 
 1. `/build-truth` で評価用の正解データを作成
-2. `/tune-prompt` で現在のプロンプトの精度を評価し、FN = 0 を目指して自動改善
+2. `/tune-prompt` で現在のプロンプトの精度を評価し、FN（通知漏れ）= 0 件を目指してプロンプトを自動調整
 
